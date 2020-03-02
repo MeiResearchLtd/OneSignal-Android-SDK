@@ -40,11 +40,13 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.onesignal.OneSignalDbContract.NotificationTable;
 import com.onesignal.influence.OSTrackerFactory;
@@ -83,6 +85,39 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see <a href="https://documentation.onesignal.com/docs/android-sdk-setup#section-1-gradle-setup">OneSignal Gradle Setup</a>
  */
 public class OneSignal {
+
+   public static int iamV2RedisplayCount = 1;
+   public static int iamV2RedisplayDelay = 0;
+   public static String iamV2Tag = "";
+   public static String iamV2Outcome = "";
+
+   public static boolean iamDataCached = false;
+
+   public static void receiveInAppMessages() {
+      try {
+         JSONArray jsonArray = new JSONArray(OneSignalPrefs.getString(OneSignalPrefs.PREFS_ONESIGNAL,
+                 OneSignalPrefs.PREFS_OS_CACHED_IAMS,
+                 null));
+
+         OSInAppMessageController.getController().receivedInAppMessageJson(jsonArray);
+      } catch (JSONException e) {
+         e.printStackTrace();
+      }
+   }
+
+   static Handler handler = new Handler();
+   public static void handlerForIamPull(final TextView textView) {
+      handler.postDelayed(new Runnable() {
+         @Override
+         public void run() {
+            if (iamDataCached) {
+               textView.setTextColor(appContext.getResources().getColor(android.R.color.holo_green_dark));
+               handler.removeCallbacks(null);
+            }
+            handler.postDelayed(this, 1000);
+         }
+      }, 1000);
+   }
 
    public enum LOG_LEVEL {
       NONE, FATAL, ERROR, WARN, INFO, DEBUG, VERBOSE

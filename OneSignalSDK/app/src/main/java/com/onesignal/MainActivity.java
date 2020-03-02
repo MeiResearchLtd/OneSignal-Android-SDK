@@ -94,6 +94,11 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
    private CheckBox postNotifGroupCheckBox;
    private CheckBox postNotifAsyncGroupCheckBox;
 
+   private EditText iamV2RedisplayCountEditText;
+   private EditText iamV2RedisplayDelayEditText;
+   private EditText iamV2TagEditText;
+   private EditText iamV2OutcomeEditText;
+
    private int sendTagsCounter = 1;
    private boolean addedObservers = false;
    private TextView iamHost;
@@ -146,6 +151,11 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       this.outcomeUnique = this.findViewById(R.id.outcomeUniqueName);
       this.iamHost.setText(OneSignalExampleApp.getOneSignalAppId(this));
 
+      this.iamV2RedisplayCountEditText = this.findViewById(R.id.iam_v2_redisplay_count_edit_text);
+      this.iamV2RedisplayDelayEditText = this.findViewById(R.id.iam_v2_redisplay_delay_edit_text);
+      this.iamV2TagEditText = this.findViewById(R.id.iam_v2_tag_edit_text);
+      this.iamV2OutcomeEditText = this.findViewById(R.id.iam_v2_outcome_edit_text);
+
       if (OneSignal.requiresUserPrivacyConsent()) {
          //disable all interactive views except consent button
          this.changeInteractiveViewsEnabled(false);
@@ -179,6 +189,23 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       });
 
       setupGroupingNotificationCheckBoxes();
+
+      updateOnIamPull();
+   }
+
+   public void updateOnIamPull() {
+      OneSignal.handlerForIamPull((TextView) findViewById(R.id.iam_v2_text_view));
+   }
+
+   public void onAttachIamV2Data(View v) {
+      OneSignal.iamV2RedisplayCount = Integer.parseInt(iamV2RedisplayCountEditText.getText().toString());
+      OneSignal.iamV2RedisplayDelay = Integer.parseInt(iamV2RedisplayDelayEditText.getText().toString());
+      OneSignal.iamV2Tag = iamV2TagEditText.getText().toString();
+      OneSignal.iamV2Outcome = iamV2OutcomeEditText.getText().toString();
+
+      OneSignal.pauseInAppMessages(false);
+
+      OneSignal.receiveInAppMessages();
    }
 
    private void updateIamhost() {

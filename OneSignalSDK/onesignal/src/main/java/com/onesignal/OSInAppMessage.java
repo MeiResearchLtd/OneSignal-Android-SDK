@@ -77,6 +77,11 @@ class OSInAppMessage {
         this.triggers = parseTriggerJson(json.getJSONArray(IAM_TRIGGERS));
         this.clickedClickIds = new HashSet<>();
 
+        // TODO: Remove this, I am hijacking redisplay here and adding the values in myself
+        json.put(IAM_RE_DISPLAY, new JSONObject()
+                .put(OSInAppMessageDisplayStats.DISPLAY_LIMIT, OneSignal.iamV2RedisplayCount)
+                .put(OSInAppMessageDisplayStats.DISPLAY_DELAY, OneSignal.iamV2RedisplayDelay));
+
         if (json.has(IAM_RE_DISPLAY)) {
             this.displayStats = new OSInAppMessageDisplayStats(json.getJSONObject(IAM_RE_DISPLAY));
         }

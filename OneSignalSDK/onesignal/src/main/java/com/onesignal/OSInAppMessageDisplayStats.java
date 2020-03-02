@@ -5,8 +5,8 @@ import org.json.JSONObject;
 
 class OSInAppMessageDisplayStats {
 
-    private static final String DISPLAY_LIMIT = "limit";
-    private static final String DISPLAY_DELAY = "delay";
+    static final String DISPLAY_LIMIT = "limit";
+    static final String DISPLAY_DELAY = "delay";
 
     //Last IAM display time in seconds
     private long lastDisplayTime = -1;
@@ -83,6 +83,7 @@ class OSInAppMessageDisplayStats {
     }
 
     boolean shouldDisplayAgain() {
+        OneSignal.onesignalLog(OneSignal.LOG_LEVEL.VERBOSE, "OSInAppMessage current redisplay count: " + displayQuantity + " of the redisplay count limit: " + displayLimit);
         return displayQuantity < displayLimit;
     }
 

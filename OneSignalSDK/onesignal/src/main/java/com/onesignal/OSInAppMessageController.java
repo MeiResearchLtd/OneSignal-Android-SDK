@@ -162,6 +162,8 @@ class OSInAppMessageController implements OSDynamicTriggerControllerObserver, OS
                 OneSignalPrefs.PREFS_OS_CACHED_IAMS,
                 json.toString());
 
+        OneSignal.iamDataCached = true;
+
         resetRedisplayMessagesBySession();
         processInAppMessageJson(json);
         deleteOldRedisplayedInAppMessages();

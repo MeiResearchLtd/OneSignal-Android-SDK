@@ -278,6 +278,54 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/iam_v2_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="IAM V2 Bug Bash"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:textSize="14sp"/>
+
+            <EditText
+                android:id="@+id/iam_v2_redisplay_count_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Redisplay count"/>
+
+            <EditText
+                android:id="@+id/iam_v2_redisplay_delay_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Delay between (sec)"/>
+
+            <EditText
+                android:id="@+id/iam_v2_tag_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tag"/>
+
+            <EditText
+                android:id="@+id/iam_v2_outcome_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Outcome"/>
+
+            <Button
+                android:id="@+id/iam_v2_attach_data_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Attach Iam Data to Next Preview"
+                android:onClick="onAttachIamV2Data"/>
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </ScrollView>
