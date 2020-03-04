@@ -82,15 +82,23 @@ class OSInAppMessageDisplayStats {
         this.displayDelay = displayDelay;
     }
 
+    /**
+     * Validate whether or not an IAM is under its redisplay limit
+     * <br/><br/>
+     * @see
+     */
     boolean shouldDisplayAgain() {
         OneSignal.onesignalLog(OneSignal.LOG_LEVEL.VERBOSE, "OSInAppMessage current redisplay count: " + displayQuantity + " of the redisplay count limit: " + displayLimit);
         return displayQuantity < displayLimit;
     }
 
+    /**
+     *
+     */
     boolean isDelayTimeSatisfied() {
-        if (lastDisplayTime < 0) {
+        if (lastDisplayTime < 0)
             return true;
-        }
+
         long currentTimeInSeconds = System.currentTimeMillis() / 1000;
         // Calculate gap between display times
         long diffInSeconds = currentTimeInSeconds - lastDisplayTime;

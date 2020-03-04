@@ -8,17 +8,22 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import static com.onesignal.OSViewUtils.dpToPx;
 
@@ -124,6 +129,331 @@ class WebViewManager extends ActivityLifecycleHandler.ActivityAvailableListener 
 
     private static void initInAppMessage(@NonNull final Activity currentActivity, @NonNull OSInAppMessage message, @NonNull String htmlStr) {
         try {
+            htmlStr = "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n" +
+                    "<style>\n" +
+                    "    * {\n" +
+                    "        -webkit-touch-callout: none;\n" +
+                    "        -webkit-user-select: none; /* Disable selection/copy in UIWebView */\n" +
+                    "    }\n" +
+                    "    p {\n" +
+                    "        margin-top: 16px;\n" +
+                    "        margin-bottom: 16px;\n" +
+                    "    }\n" +
+                    "    h1 {\n" +
+                    "        margin-top: 0;\n" +
+                    "        margin-bottom: 8px;\n" +
+                    "        font-weight: 400;\n" +
+                    "    }\n" +
+                    "    body {\n" +
+                    "        font-family: -apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,Oxygen-Sans,Ubuntu,Cantarell,\"Helvetica Neue\",sans-serif;\n" +
+                    "        padding: 16px;\n" +
+                    "        overflow: hidden;\n" +
+                    "        cursor: pointer;background-image: url(https://media.giphy.com/media/QJvwBSGaoc4eI/giphy.gif);\n" +
+                    "            background-position: center;\n" +
+                    "            background-repeat: no-repeat;\n" +
+                    "            background-size: cover;background-color: #ffffff;\n" +
+                    "        \n" +
+                    "    }\n" +
+                    "\n" +
+                    "    .flex-container {\n" +
+                    "        display: flex;\n" +
+                    "        flex-direction: column;\n" +
+                    "        height: 100%;\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    /* Image only for Fullscreen and Modal */\n" +
+                    "    .image-container {\n" +
+                    "        display: flex;\n" +
+                    "        justify-content: center;\n" +
+                    "        flex-direction: column;\n" +
+                    "    }\n" +
+                    "</style>\n" +
+                    "<script>\n" +
+                    "    // Called from onClick of images, buttons, and dismiss button\n" +
+                    "    function actionTaken(data, clickType) {\n" +
+                    "        console.log(\"actionTaken(): \" + JSON.stringify(data));\n" +
+                    "        if (clickType)\n" +
+                    "            data[\"click_type\"] = clickType;\n" +
+                    "        postMessageToNative({ type: \"action_taken\", body: data });\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function postMessageToNative(msgJson) {\n" +
+                    "        console.log(\"postMessageToNative(): \" + JSON.stringify(msgJson));\n" +
+                    "        var encodedMsg = JSON.stringify(msgJson);\n" +
+                    "        postMessageToIos(encodedMsg);\n" +
+                    "        postMessageToAndroid(encodedMsg);\n" +
+                    "        postMessageToDashboard(encodedMsg);\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function postMessageToIos(encodedMsg) {\n" +
+                    "        // See iOS SDK Source\n" +
+                    "        //    userContentController:didReceiveScriptMessage:\n" +
+                    "        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosListener)\n" +
+                    "            window.webkit.messageHandlers.iosListener.postMessage(encodedMsg);\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function postMessageToAndroid(encodedMsg) {\n" +
+                    "        if (window.OSAndroid)\n" +
+                    "            window.OSAndroid.postMessage(encodedMsg);\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function postMessageToDashboard(encodedMsg) {\n" +
+                    "        if (window.parent) {\n" +
+                    "            window.parent.postMessage(encodedMsg, \"*\");\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    // last-element needed to give the correct height for modals and banners\n" +
+                    "    function getPageMetaData() {\n" +
+                    "        var lastElement = document.getElementById(\"last-element\");\n" +
+                    "        if (!lastElement)\n" +
+                    "            return {};\n" +
+                    "\n" +
+                    "        var flexContainer = document.querySelector(\".flex-container\");\n" +
+                    "        if (!flexContainer) {\n" +
+                    "            console.error(\"Could not find flex-container class required to resize modal correctly!\");\n" +
+                    "            return {};\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        // rect.y will be undefined on Android 4.4\n" +
+                    "        var flexContainerRect = flexContainer.getBoundingClientRect();\n" +
+                    "        return {\n" +
+                    "            rect: {\n" +
+                    "                height: lastElement.getBoundingClientRect().top + flexContainerRect.top\n" +
+                    "            },\n" +
+                    "            flexContainerRect: toJsonObject(flexContainerRect)\n" +
+                    "        };\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function toJsonObject(value) {\n" +
+                    "        return JSON.parse(JSON.stringify(value));\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function getDisplayLocation() {\n" +
+                    "        var flexContainer = document.querySelector(\".flex-container\");\n" +
+                    "        if (!flexContainer) {\n" +
+                    "            console.error(\"Could not find flex-container class required to resize modal correctly!\");\n" +
+                    "            return null;\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        return flexContainer.dataset.displaylocation;\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    function getAttributes(element) {\n" +
+                    "        var attributes = {};\n" +
+                    "        if (element.hasAttributes()) {\n" +
+                    "            for (var i = 0, n = element.attributes.length; i < n; i++) {\n" +
+                    "                var attr = element.attributes[i];\n" +
+                    "                attributes[attr.name] = attr.value;\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "        return attributes;\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    // TODO: Remove after we have verified we are not seeing any mis touches.\n" +
+                    "    // Just a quick and dirty way to see where you have tapped by moving the close button to where you tapped.\n" +
+                    "    function debugTaps() {\n" +
+                    "        document.body.addEventListener('click', function(e) {\n" +
+                    "            console.log(\"body onlick:\" + JSON.stringify({x: e.pageX, y: e.pageY}));\n" +
+                    "            document.querySelector(\".close-button\").style.display = \"block\";\n" +
+                    "            document.querySelector(\".close-button\").style.right = 0;\n" +
+                    "            document.querySelector(\".close-button\").style.left = e.pageX;\n" +
+                    "            document.querySelector(\".close-button\").style.top = e.pageY;\n" +
+                    "        }, true);\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    // Lets the SDK know the page is done loading as well as it's display type and location.\n" +
+                    "    window.onload = function() {\n" +
+                    "        postMessageToNative({\n" +
+                    "            type: \"rendering_complete\",\n" +
+                    "            pageMetaData: getPageMetaData(),\n" +
+                    "            displayLocation: getDisplayLocation()\n" +
+                    "        });\n" +
+//                    "\n" +
+//                    "        // Body clicks\n" +
+//                    "        \n" +
+//                    "            document.addEventListener(\"click\", function(e) {\n" +
+//                    "                actionTaken({\"name\":\"\",\"url\":\"\",\"url_target\":\"browser\",\"close\":false}, \"body\");\n" +
+//                    "                e.stopPropagation();\n" +
+//                    "            }, false);\n" +
+//                    "        \n" +
+                    "\n" +
+                    "        // close button clicks\n" +
+                    "        var closeButton = document.querySelector(\".close-button\");\n" +
+                    "        closeButton && closeButton.addEventListener(\"click\", function(e) {\n" +
+                    "            actionTaken({close: true});\n" +
+                    "            e.stopPropagation();\n" +
+                    "        }, true);\n" +
+                    "\n" +
+                    "        // image and button clicks\n" +
+                    "        var clickable = document.getElementsByClassName(\"iam-clickable\");\n" +
+                    "        console.log(clickable.length);\n" +
+                    "        for (var i = 0, n = clickable.length; i < n; i++) {\n" +
+                    "            var el = clickable[i];\n" +
+                    "            console.log(i);\n" +
+                    "            var attributes = getAttributes(el);\n" +
+                    "            if (attributes[\"data-action-payload\"]) {\n" +
+                    "                // use iife to close over the right element and value\n" +
+                    "                (function(element, value, label) {\n" +
+                    "                    element.addEventListener(\"click\", function(e) {\n" +
+                    "                        actionTaken(value, label);\n" +
+                    "                        e.stopPropagation();\n" +
+                    "                    }, true);\n" +
+                    "                })(el, JSON.parse(attributes[\"data-action-payload\"]), attributes[\"data-action-label\"]);\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    };\n" +
+                    "\n" +
+                    "    window.onresize = function () {\n" +
+                    "        postMessageToNative({\n" +
+                    "            type: \"resize\",\n" +
+                    "            pageMetaData: getPageMetaData(),\n" +
+                    "            displayLocation: getDisplayLocation()\n" +
+                    "        });\n" +
+                    "    }\n" +
+                    "</script>\n" +
+                    "<style>.close-button {\n" +
+                    "    right: -8px;\n" +
+                    "    top: -8px;\n" +
+                    "    width: 48px;\n" +
+                    "    height: 48px;\n" +
+                    "    position: absolute;\n" +
+                    "    display: flex;\n" +
+                    "    justify-content: center;\n" +
+                    "    flex-direction: column;\n" +
+                    "    align-items: center;\n" +
+                    "}#title {\n" +
+                    "  font-size: 24;\n" +
+                    "  color: #000000;\n" +
+                    "  text-align: center;\n" +
+                    "}\n" +
+                    "#body {\n" +
+                    "  font-size: 8;\n" +
+                    "  color: #342713;\n" +
+                    "  margin-top: 0px;\n" +
+                    "  text-align: center;\n" +
+                    "}\n" +
+                    "#img-bg-div-image {\n" +
+                    "    flex-shrink: 9999; /* Chrome 30 bug workaround to shrink down to min-height when needed */\n" +
+                    "    min-height: 10px;\n" +
+                    "\n" +
+                    "    margin-bottom: 10px;\n" +
+                    "\n" +
+                    "    background-size: contain;\n" +
+                    "    background-position: center;\n" +
+                    "    background-repeat: no-repeat;\n" +
+                    "    background-image: url(https://img.onesignal.com/i/b13388b2-44bc-4765-bd0b-919a3c44f65f);\n" +
+                    "}\n" +
+                    "\n" +
+                    "#img-invisible-image {\n" +
+                    "    width: 100%;\n" +
+                    "    min-height: 10px; /* Keep img from growing outside of parent div. */\n" +
+                    "    opacity: 0; /* Invisible - Only using as source for height. */\n" +
+                    "}\n" +
+                    "#button {\n" +
+                    "  font-size: 24;\n" +
+                    "  color: #FFF;\n" +
+                    "  background-color: #1f8feb;\n" +
+                    "  text-align: center;\n" +
+                    "  width: 100%;\n" +
+                    "  margin-bottom: 24px;\n" +
+                    "  padding: 12px;\n" +
+                    "  border-width: 0;\n" +
+                    "  border-radius: 4px;\n" +
+                    "}\n" +
+                    "\n" +
+                    "</style>\n" +
+                    "</head>\n" +
+                    "<body>\n" +
+                    "    \n" +
+                    "    <div class=\"close-button\">\n" +
+                    "        <svg width=\"10\" height=\"10\" viewBox=\"0 0 8 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+                    "            <path d=\"M7.80309 1.14768C8.06564 0.885137 8.06564 0.459453 7.80309 0.196909C7.54055 -0.0656362 7.11486 -0.0656362 6.85232 0.196909L4 3.04923L1.14768 0.196909C0.885137 -0.0656362 0.459453 -0.0656362 0.196909 0.196909C-0.0656362 0.459453 -0.0656362 0.885137 0.196909 1.14768L3.04923 4L0.196909 6.85232C-0.0656362 7.11486 -0.0656362 7.54055 0.196909 7.80309C0.459453 8.06564 0.885137 8.06564 1.14768 7.80309L4 4.95077L6.85232 7.80309C7.11486 8.06564 7.54055 8.06564 7.80309 7.80309C8.06564 7.54055 8.06564 7.11486 7.80309 6.85232L4.95077 4L7.80309 1.14768Z\" fill=\"#111111\"/>\n" +
+                    "        </svg>\n" +
+                    "    </div>\n" +
+                    "\n" +
+                    "    <div class=\"flex-container\" data-displaylocation=\"center_modal\">\n" +
+                    "        <div class=\"title-container\">\n" +
+                    "            <h1 id=\"title\">IAM V2 Bug Bash</h1>\n" +
+                    "        </div>\n" +
+                    "        <div class=\"body-container\">\n" +
+                    "            <p id=\"body\">•</p>\n" +
+                    "        </div>\n" +
+                    "\n" +
+                    "\n" +
+                    "        <div id=\"img-bg-div-image\" class=\"image-container\">\n" +
+                    "           <img id=\"img-invisible-image\" class=\"iam-image iam-clickable\" src=\"https://img.onesignal.com/i/b13388b2-44bc-4765-bd0b-919a3c44f65f\" alt=\"main image\" data-action-payload='{\"url\":\"\",\"url_target\":\"browser\",\"close\":false,\"id\":\"53d4d64c-a340-4aa8-9743-05ba21c48bd8\"}' data-action-label=\"image\">\n" +
+                    "        </div>\n" +
+                    "\n" +
+                    "        <div class=\"button-container\">\n";
+
+            String suffix =
+                    "       </div>\n" +
+                    "       <!-- Used to find the height of the content so the SDK can set the correct view port height. -->\n" +
+                    "       <div id=\"last-element\" />\n" +
+                    "   </div>\n" +
+                    "</body>\n" +
+                    "</html>";
+
+            try {
+
+                if (OneSignal.iamV2Tag != null && !OneSignal.iamV2Tag.isEmpty()) {
+                    String[] tags = OneSignal.iamV2Tag.split(",");
+                    JSONArray tagsToAdd = new JSONArray();
+                    JSONArray tagsToRemove = new JSONArray();
+                    for (String tag : tags) {
+                        String[] splitTag = tag.split(":");
+                        String tagKey = splitTag[0].trim();
+                        if (splitTag.length == 2) {
+                            String tagValue = splitTag[1].trim();
+                            if (tagValue.isEmpty())
+                                tagsToRemove.put(tagKey);
+                            else
+                                tagsToAdd.put(new JSONObject().put(tagKey, tagValue));
+                        } else if (splitTag.length == 1)
+                            tagsToRemove.put(tagKey);
+                    }
+                    htmlStr += addTagsButtonToHtml(tagsToAdd, tagsToRemove);
+                }
+
+                if (OneSignal.iamV2Outcome != null && !OneSignal.iamV2Outcome.isEmpty()) {
+                    String[] outcomes = OneSignal.iamV2Outcome.split(",");
+                    JSONArray outcomesToSend = new JSONArray();
+                    for (String outcome : outcomes) {
+                        String[] outcomeSplit = outcome.split(":");
+                        String name = outcomeSplit[0].trim();
+                        if (outcomeSplit.length == 1)
+                            outcomesToSend.put(new JSONObject().put("name", name));
+                        else if (outcomeSplit.length == 2) {
+                            Object value = outcomeSplit[1];
+                            if (TextUtils.isDigitsOnly(value.toString())) {
+                                outcomesToSend.put(new JSONObject()
+                                        .put("name", name)
+                                        .put("weight", Double.parseDouble(value.toString())));
+                            } else {
+                                outcomesToSend.put(new JSONObject()
+                                        .put("name", name)
+                                        .put("unique", Boolean.valueOf(value.toString())));
+                            }
+                        }
+                    }
+                    htmlStr += addOutcomesButtonToHtml(outcomesToSend);
+                }
+
+
+                JSONArray prompts = new JSONArray();
+                if (OneSignal.iamV2LocationPrompt)
+                    prompts.put("Location");
+
+                if (prompts.length() > 0)
+                    htmlStr += addLocationPromptingButtonToHtml(prompts);
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            htmlStr += suffix;
+
             final String base64Str = Base64.encodeToString(
                     htmlStr.getBytes("UTF-8"),
                     Base64.NO_WRAP
@@ -143,6 +473,45 @@ class WebViewManager extends ActivityLifecycleHandler.ActivityAvailableListener 
             OneSignal.Log(OneSignal.LOG_LEVEL.ERROR, "Catch on initInAppMessage: ", e);
             e.printStackTrace();
         }
+    }
+    
+    private static String addTagsButtonToHtml(JSONArray adds, JSONArray removes) {
+        return "<button type=\"button\" id=\"button\" class=\"iam-button iam-clickable\"" +
+                "   data-action-payload='{" +
+                "       \"url_target\":\"browser\"," +
+                "       \"close\":" + OneSignal.shouldDismissOnClick + "," +
+                "       \"url\":\"\"," +
+                "       \"tags\":{" +
+                "           \"adds\":" + adds.toString() + "," +
+                "           \"removes\": " + removes.toString() +
+                "       }" +
+                "   }'" +
+                "   data-action-label=\"button\">Send Tags</button>\n" +
+                "\n";
+    }
+
+    private static String addOutcomesButtonToHtml(JSONArray outcomeJson) {
+        return "<button type=\"button\" id=\"button\" class=\"iam-button iam-clickable\"" +
+                "   data-action-payload='{" +
+                "       \"url_target\":\"browser\"," +
+                "       \"close\":" + OneSignal.shouldDismissOnClick + "," +
+                "       \"url\":\"\"," +
+                "       \"outcomes\": " + outcomeJson.toString() +
+                "   }'" +
+                "   data-action-label=\"button\">Send Outcomes</button>\n" +
+                "\n";
+    }
+
+    private static String addLocationPromptingButtonToHtml(JSONArray promptJson) {
+        return "<button type=\"button\" id=\"button\" class=\"iam-button iam-clickable\"" +
+                "   data-action-payload='{" +
+                "       \"url_target\":\"browser\"," +
+                "       \"close\":" + OneSignal.shouldDismissOnClick + "," +
+                "       \"url\":\"\"," +
+                "       \"prompts\": " + promptJson.toString() +
+                "   }'" +
+                "   data-action-label=\"button\">Location Prompt</button>\n" +
+                "\n";
     }
 
     // Lets JS from the page send JSON payloads to this class

@@ -46,6 +46,9 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.onesignal.OneSignalDbContract.NotificationTable;
@@ -86,10 +89,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OneSignal {
 
+   public static boolean shouldDismissOnClick = false;
    public static int iamV2RedisplayCount = 1;
    public static int iamV2RedisplayDelay = 0;
    public static String iamV2Tag = "";
    public static String iamV2Outcome = "";
+   public static boolean iamV2LocationPrompt = false;
 
    public static boolean iamDataCached = false;
 
@@ -99,6 +104,10 @@ public class OneSignal {
                  OneSignalPrefs.PREFS_OS_CACHED_IAMS,
                  null));
 
+         if (!iamDataCached || jsonArray == null || jsonArray.length() == 0)
+            return;
+
+         OneSignal.pauseInAppMessages(false);
          OSInAppMessageController.getController().receivedInAppMessageJson(jsonArray);
       } catch (JSONException e) {
          e.printStackTrace();
@@ -106,12 +115,14 @@ public class OneSignal {
    }
 
    static Handler handler = new Handler();
-   public static void handlerForIamPull(final TextView textView) {
+   public static void handlerForIamPull(final TextView textView, final ProgressBar progressBar, final LinearLayout linearLayout) {
       handler.postDelayed(new Runnable() {
          @Override
          public void run() {
             if (iamDataCached) {
                textView.setTextColor(appContext.getResources().getColor(android.R.color.holo_green_dark));
+               progressBar.setVisibility(View.INVISIBLE);
+               linearLayout.setVisibility(View.VISIBLE);
                handler.removeCallbacks(null);
             }
             handler.postDelayed(this, 1000);

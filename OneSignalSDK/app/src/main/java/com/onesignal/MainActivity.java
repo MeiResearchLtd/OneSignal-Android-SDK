@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +44,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -98,6 +101,8 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
    private EditText iamV2RedisplayDelayEditText;
    private EditText iamV2TagEditText;
    private EditText iamV2OutcomeEditText;
+   private CheckBox iamV2DismissCheckBox;
+   private CheckBox iamV2LocationPromptCheckBox;
 
    private int sendTagsCounter = 1;
    private boolean addedObservers = false;
@@ -155,6 +160,8 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       this.iamV2RedisplayDelayEditText = this.findViewById(R.id.iam_v2_redisplay_delay_edit_text);
       this.iamV2TagEditText = this.findViewById(R.id.iam_v2_tag_edit_text);
       this.iamV2OutcomeEditText = this.findViewById(R.id.iam_v2_outcome_edit_text);
+      this.iamV2DismissCheckBox = this.findViewById(R.id.iam_v2_dismiss_on_click_checkbox);
+      this.iamV2LocationPromptCheckBox = this.findViewById(R.id.iam_v2_location_prompt_checkbox);
 
       if (OneSignal.requiresUserPrivacyConsent()) {
          //disable all interactive views except consent button
@@ -194,14 +201,25 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
    }
 
    public void updateOnIamPull() {
-      OneSignal.handlerForIamPull((TextView) findViewById(R.id.iam_v2_text_view));
+      OneSignal.handlerForIamPull(
+              (TextView) findViewById(R.id.iam_v2_text_view),
+              (ProgressBar) findViewById(R.id.iam_v2_progress_bar),
+              (LinearLayout) findViewById(R.id.iam_v2_test_area_linear_layout));
    }
 
    public void onAttachIamV2Data(View v) {
-      OneSignal.iamV2RedisplayCount = Integer.parseInt(iamV2RedisplayCountEditText.getText().toString());
-      OneSignal.iamV2RedisplayDelay = Integer.parseInt(iamV2RedisplayDelayEditText.getText().toString());
-      OneSignal.iamV2Tag = iamV2TagEditText.getText().toString();
-      OneSignal.iamV2Outcome = iamV2OutcomeEditText.getText().toString();
+      String iamv2RedisplayCount = iamV2RedisplayCountEditText.getText().toString().trim();
+      if (!TextUtils.isEmpty(iamv2RedisplayCount))
+         OneSignal.iamV2RedisplayCount = Integer.parseInt(iamv2RedisplayCount);
+
+      String iamv2RedisplayDelay = iamV2RedisplayDelayEditText.getText().toString().trim();
+      if (!TextUtils.isEmpty(iamv2RedisplayDelay))
+         OneSignal.iamV2RedisplayDelay = Integer.parseInt(iamv2RedisplayDelay);
+
+      OneSignal.iamV2Tag = iamV2TagEditText.getText().toString().trim();
+      OneSignal.iamV2Outcome = iamV2OutcomeEditText.getText().toString().trim();
+      OneSignal.shouldDismissOnClick = iamV2DismissCheckBox.isChecked();
+      OneSignal.iamV2LocationPrompt = iamV2LocationPromptCheckBox.isChecked();
 
       OneSignal.pauseInAppMessages(false);
 

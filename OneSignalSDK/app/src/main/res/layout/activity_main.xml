@@ -282,28 +282,49 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/iam_v2_text_view"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:text="IAM V2 Bug Bash"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/holo_red_dark"
                 android:textStyle="bold"
-                android:textSize="14sp"/>
+                android:textSize="14sp"
+                android:layout_marginRight="8dp"/>
+
+            <ProgressBar
+                android:id="@+id/iam_v2_progress_bar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:indeterminateTint="@android:color/holo_red_dark"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/iam_v2_test_area_linear_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:orientation="vertical">
 
             <EditText
                 android:id="@+id/iam_v2_redisplay_count_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Redisplay count"/>
+                android:hint="Redisplay count"
+                android:inputType="numberDecimal"/>
 
             <EditText
                 android:id="@+id/iam_v2_redisplay_delay_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Delay between (sec)"/>
+                android:hint="Delay between (sec)"
+                android:inputType="numberDecimal"/>
 
             <EditText
                 android:id="@+id/iam_v2_tag_edit_text"
@@ -316,6 +337,46 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Outcome"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dismiss IAM On Click: "
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"
+                    android:layout_marginRight="8dp" />
+
+                <CheckBox
+                    android:id="@+id/iam_v2_dismiss_on_click_checkbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Location Prompting: "
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"
+                    android:layout_marginRight="8dp" />
+
+                <CheckBox
+                    android:id="@+id/iam_v2_location_prompt_checkbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
 
             <Button
                 android:id="@+id/iam_v2_attach_data_button"
