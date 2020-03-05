@@ -426,14 +426,14 @@ class WebViewManager extends ActivityLifecycleHandler.ActivityAvailableListener 
                             outcomesToSend.put(new JSONObject().put("name", name));
                         else if (outcomeSplit.length == 2) {
                             Object value = outcomeSplit[1];
-                            if (TextUtils.isDigitsOnly(value.toString())) {
-                                outcomesToSend.put(new JSONObject()
-                                        .put("name", name)
-                                        .put("weight", Double.parseDouble(value.toString())));
-                            } else {
+                            if (value.toString().toLowerCase().equals("true") || value.toString().toLowerCase().equals("false")) {
                                 outcomesToSend.put(new JSONObject()
                                         .put("name", name)
                                         .put("unique", Boolean.valueOf(value.toString())));
+                            } else {
+                                outcomesToSend.put(new JSONObject()
+                                        .put("name", name)
+                                        .put("weight", Double.parseDouble(value.toString())));
                             }
                         }
                     }
