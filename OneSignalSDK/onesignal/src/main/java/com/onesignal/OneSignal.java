@@ -194,9 +194,9 @@ public class OneSignal {
          @Override
          public void run() {
             completion.onComplete(Debug.getOutcomeTrackingMap());
-            outcomeDebugHandler.postDelayed(this, 10000);
+            outcomeDebugHandler.postDelayed(this, 1000);
          }
-      }, 10000);
+      }, 1000);
    }
 
    static Handler iamDebugHandler = new Handler();
