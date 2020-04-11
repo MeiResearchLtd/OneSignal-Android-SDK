@@ -57,6 +57,7 @@ public class OneSignalExampleApp extends Application {
               .penaltyLog()
               .build());
 
+      OneSignal.setInFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification);
       OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE);
 
       String currentAppId = getOneSignalAppId(this);

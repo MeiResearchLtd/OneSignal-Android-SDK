@@ -146,6 +146,7 @@ class OSInAppMessageController implements OSDynamicTriggerControllerObserver, OS
 
         try {
             processInAppMessageJson(new JSONArray(cachedIamsStr));
+            OneSignal.Debug.receiveInAppMessages();
         } catch (JSONException e) {
             e.printStackTrace();
         }

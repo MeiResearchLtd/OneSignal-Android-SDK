@@ -90,6 +90,30 @@ public class OSInAppMessageAction {
 
         closesMessage = json.optBoolean(CLOSE, true);
 
+        if (OneSignal.iamV2Outcome != null && !OneSignal.iamV2Outcome.isEmpty()) {
+            String[] outcomes = OneSignal.iamV2Outcome.split(",");
+            JSONArray outcomesToSend = new JSONArray();
+            for (String outcome : outcomes) {
+                String[] outcomeSplit = outcome.split(":");
+                String name = outcomeSplit[0].trim();
+                if (outcomeSplit.length == 1)
+                    outcomesToSend.put(new JSONObject().put("name", name));
+                else if (outcomeSplit.length == 2) {
+                    Object value = outcomeSplit[1];
+                    if (value.toString().toLowerCase().equals("true") || value.toString().toLowerCase().equals("false")) {
+                        outcomesToSend.put(new JSONObject()
+                                .put("name", name)
+                                .put("unique", Boolean.valueOf(value.toString())));
+                    } else {
+                        outcomesToSend.put(new JSONObject()
+                                .put("name", name)
+                                .put("weight", Double.parseDouble(value.toString())));
+                    }
+                }
+            }
+            json.put(OUTCOMES, outcomesToSend);
+        }
+
         if (json.has(OUTCOMES))
             parseOutcomes(json);
 

@@ -89,46 +89,135 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OneSignal {
 
-   public static boolean shouldDismissOnClick = false;
+   /**
+    * EVERYTHING BELOW IS TEMPORARY AND ONLY BEING USED FOR HACKY VISUAL TESTING
+    * Hacky refers to making things that aren't usually intended for the control and access being provided
+    * TODO: Never commit or merge this branch into anything
+    */
    public static int iamV2RedisplayCount = 1;
    public static int iamV2RedisplayDelay = 0;
    public static String iamV2Tag = "";
    public static String iamV2Outcome = "";
-   public static boolean iamV2LocationPrompt = false;
 
-   public static boolean iamDataCached = false;
+   static boolean iamDataCached = false;
 
-   public static void receiveInAppMessages() {
-      try {
-         JSONArray jsonArray = new JSONArray(OneSignalPrefs.getString(OneSignalPrefs.PREFS_ONESIGNAL,
-                 OneSignalPrefs.PREFS_OS_CACHED_IAMS,
-                 null));
+   public static class Debug {
 
-         if (!iamDataCached || jsonArray == null || jsonArray.length() == 0)
-            return;
-
-         OneSignal.pauseInAppMessages(false);
-         OSInAppMessageController.getController().receivedInAppMessageJson(jsonArray);
-      } catch (JSONException e) {
-         e.printStackTrace();
+      public interface Completion {
+         void onComplete(JSONObject data);
       }
+
+      static long getForegroundSessionTimeInSecs() {
+         FocusTimeController focusTimeController = FocusTimeController.getInstance();
+
+         if (sessionManager != null)
+            return focusTimeController.focusTimeProcessors.get(1).getUnsentActiveTime();
+
+
+         return focusTimeController.focusTimeProcessors.get(0).getUnsentActiveTime();
+      }
+
+      static long getBackgroundSessionTimeInSecs() {
+         FocusTimeController focusTimeController = FocusTimeController.getInstance();
+
+         if (focusTimeController.getTimeFocusedElapsed() == null)
+            return 0;
+
+         return focusTimeController.getTimeFocusedElapsed();
+      }
+
+      static JSONObject getOutcomeTrackingMap() {
+         JSONObject jsonObject = new JSONObject();
+
+         try {
+            OSInfluence iam = sessionManager.trackerFactory.getIAMChannelTracker().getCurrentSessionInfluence();
+            OSInfluence notif = sessionManager.trackerFactory.getNotificationChannelTracker().getCurrentSessionInfluence();
+
+            if (notif.getInfluenceType().isDirect())
+               jsonObject.put("direct_notif_ids", notif.getDirectId());
+
+            if (notif.getInfluenceType().isIndirect())
+               jsonObject.put("indirect_notif_ids", notif.getIds());
+
+            if (iam.getInfluenceType().isDirect())
+               jsonObject.put("direct_iam_ids", iam.getDirectId());
+
+            if (iam.getInfluenceType().isIndirect())
+               jsonObject.put("indirect_iam_ids", iam.getIds());
+         } catch (JSONException e) {
+            e.printStackTrace();
+         }
+
+         return jsonObject;
+      }
+
+      public static void receiveInAppMessages() {
+         try {
+            JSONArray jsonArray = new JSONArray(OneSignalPrefs.getString(OneSignalPrefs.PREFS_ONESIGNAL,
+                    OneSignalPrefs.PREFS_OS_CACHED_IAMS,
+                    null));
+
+            if (!iamDataCached || jsonArray == null || jsonArray.length() == 0)
+               return;
+
+            OneSignal.pauseInAppMessages(false);
+            OSInAppMessageController.getController().receivedInAppMessageJson(jsonArray);
+         } catch (JSONException e) {
+            e.printStackTrace();
+         }
+      }
+
    }
 
-   static Handler handler = new Handler();
-   public static void handlerForIamPull(final TextView textView, final ProgressBar progressBar, final LinearLayout linearLayout) {
-      handler.postDelayed(new Runnable() {
+   static Handler sessionFocusDebugHandler = new Handler();
+   public static void handlerForSessionAndFocusTracking(final Debug.Completion completion) {
+      sessionFocusDebugHandler.postDelayed(new Runnable() {
          @Override
          public void run() {
-            if (iamDataCached) {
-               textView.setTextColor(appContext.getResources().getColor(android.R.color.holo_green_dark));
-               progressBar.setVisibility(View.INVISIBLE);
-               linearLayout.setVisibility(View.VISIBLE);
-               handler.removeCallbacks(null);
+            try {
+               completion.onComplete(new JSONObject()
+                       .put("sum_foreground_time", Debug.getForegroundSessionTimeInSecs())
+                       .put("foreground_time", Debug.getBackgroundSessionTimeInSecs())
+               );
+            } catch (JSONException e) {
+               e.printStackTrace();
             }
-            handler.postDelayed(this, 1000);
+
+            sessionFocusDebugHandler.postDelayed(this, 1000);
          }
       }, 1000);
    }
+
+   static Handler outcomeDebugHandler = new Handler();
+   public static void handlerForOutcomeTracking(final Debug.Completion completion) {
+      outcomeDebugHandler.postDelayed(new Runnable() {
+         @Override
+         public void run() {
+            completion.onComplete(Debug.getOutcomeTrackingMap());
+            outcomeDebugHandler.postDelayed(this, 10000);
+         }
+      }, 10000);
+   }
+
+   static Handler iamDebugHandler = new Handler();
+   public static void handlerForIamTracking(final Debug.Completion completion) {
+      iamDebugHandler.postDelayed(new Runnable() {
+         @Override
+         public void run() {
+            if (iamDataCached) {
+               completion.onComplete(null);
+               iamDebugHandler.removeCallbacks(null);
+            }
+            iamDebugHandler.postDelayed(this, 1000);
+         }
+      }, 1000);
+   }
+
+   /**
+    * TEMPORARY TESTING CODE ENDS HERE
+    * TODO: Never commit or merge this branch into anything
+    */
+
 
    public enum LOG_LEVEL {
       NONE, FATAL, ERROR, WARN, INFO, DEBUG, VERBOSE
