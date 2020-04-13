@@ -173,7 +173,6 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       this.outcomeValueName = this.findViewById(R.id.outcomeNameValue);
       this.outcomeValue = this.findViewById(R.id.outcomeValue);
       this.outcomeUnique = this.findViewById(R.id.outcomeUniqueName);
-      this.iamHost.setText(OneSignalExampleApp.getOneSignalAppId(this));
 
       // Session and Focus Tracking Debug Fields
       this.sessionFocusTitleTextView = this.findViewById(R.id.session_and_focus_text_view);
@@ -195,6 +194,8 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       this.iamV2RedisplayDelayEditText = this.findViewById(R.id.iam_v2_redisplay_delay_edit_text);
       this.iamV2TagEditText = this.findViewById(R.id.iam_v2_tag_edit_text);
       this.iamV2OutcomeEditText = this.findViewById(R.id.iam_v2_outcome_edit_text);
+
+      this.iamHost.setText(OneSignalExampleApp.getOneSignalAppId(this));
 
       if (OneSignal.requiresUserPrivacyConsent()) {
          //disable all interactive views except consent button
