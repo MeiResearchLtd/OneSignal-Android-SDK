@@ -46,16 +46,13 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.onesignal.OneSignalDbContract.NotificationTable;
 import com.onesignal.influence.OSTrackerFactory;
 import com.onesignal.influence.model.OSInfluence;
 import com.onesignal.outcomes.OSOutcomeEventsFactory;
 import com.onesignal.outcomes.model.OSOutcomeEventParams;
+import com.onesignal.outcomes.model.OSOutcomeSource;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -126,24 +123,26 @@ public class OneSignal {
          return focusTimeController.getTimeFocusedElapsed();
       }
 
-      static JSONObject getOutcomeTrackingMap() {
+      static JSONObject getOutcomeNotificationTracking() {
          JSONObject jsonObject = new JSONObject();
 
          try {
-            OSInfluence iam = sessionManager.trackerFactory.getIAMChannelTracker().getCurrentSessionInfluence();
-            OSInfluence notif = sessionManager.trackerFactory.getNotificationChannelTracker().getCurrentSessionInfluence();
+            if (outcomeEventsController != null) {
+               OSOutcomeSource source = outcomeEventsController.createOutcomeEvent(sessionManager.getInfluences());
 
-            if (notif.getInfluenceType().isDirect())
-               jsonObject.put("direct_notif_ids", notif.getDirectId());
+               if (source.getDirectBody() != null && source.getDirectBody().getNotificationIds() != null)
+                  jsonObject.put("direct_notif_ids", source.getDirectBody().getNotificationIds());
 
-            if (notif.getInfluenceType().isIndirect())
-               jsonObject.put("indirect_notif_ids", notif.getIds());
+               if (source.getIndirectBody() != null && source.getIndirectBody().getNotificationIds() != null)
+                  jsonObject.put("indirect_notif_ids", source.getIndirectBody().getNotificationIds());
 
-            if (iam.getInfluenceType().isDirect())
-               jsonObject.put("direct_iam_ids", iam.getDirectId());
+               if (source.getDirectBody() != null && source.getDirectBody().getInAppMessagesIds() != null)
+                  jsonObject.put("direct_iam_ids", source.getDirectBody().getInAppMessagesIds());
 
-            if (iam.getInfluenceType().isIndirect())
-               jsonObject.put("indirect_iam_ids", iam.getIds());
+               if (source.getIndirectBody() != null && source.getIndirectBody().getInAppMessagesIds() != null)
+                  jsonObject.put("indirect_iam_ids", source.getIndirectBody().getInAppMessagesIds());
+
+            }
          } catch (JSONException e) {
             e.printStackTrace();
          }
@@ -189,14 +188,18 @@ public class OneSignal {
    }
 
    static Handler outcomeDebugHandler = new Handler();
-   public static void handlerForOutcomeTracking(final Debug.Completion completion) {
+   public static void handlerForOutcomeTracking(final Debug.Completion completion, final Debug.Completion completion2) {
       outcomeDebugHandler.postDelayed(new Runnable() {
          @Override
          public void run() {
-            completion.onComplete(Debug.getOutcomeTrackingMap());
+            completion.onComplete(Debug.getOutcomeNotificationTracking());
             outcomeDebugHandler.postDelayed(this, 1000);
          }
       }, 1000);
+
+      if (outcomeEventsController != null) {
+         outcomeEventsController.outcomeEventSourceCallback = completion2;
+      }
    }
 
    static Handler iamDebugHandler = new Handler();

@@ -13,20 +13,22 @@ import com.onesignal.example.R;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.util.ArrayList;
+
 public class StringRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private LayoutInflater layoutInflater;
 
     private Context context;
 
-    private JSONArray ids;
+    private ArrayList<String> ids;
 
-    public StringRecyclerViewAdapter(Context context, JSONArray ids) {
+    StringRecyclerViewAdapter(Context context, JSONArray ids) {
         this.context = context;
+        this.layoutInflater = LayoutInflater.from(context);
 
-        this.ids = ids;
-
-        layoutInflater = LayoutInflater.from(context);
+        this.ids = new ArrayList<>();
+        this.ids.addAll(convertJsonArrayToStringArrayList(ids));
     }
 
     @NonNull
@@ -38,19 +40,15 @@ public class StringRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        try {
-            ((ViewHolder) holder).setData(position, ids.getString(position));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        ((ViewHolder) holder).setData(position, ids.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return ids.length();
+        return ids.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
 
         private TextView stringTextView;
 
@@ -73,9 +71,23 @@ public class StringRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     }
 
-    public void setIds(JSONArray ids) {
-        this.ids = ids;
-        notifyDataSetChanged();
+    void setIds(JSONArray ids) {
+        this.ids.clear();
+        this.ids.addAll(convertJsonArrayToStringArrayList(ids));
+        this.notifyDataSetChanged();
+    }
+
+    ArrayList<String> convertJsonArrayToStringArrayList(JSONArray jsonArray) {
+        ArrayList<String> strings = new ArrayList<>();
+        try {
+            ArrayList<Object> idObjects = new ArrayList<>(JSONUtils.jsonArrayToList(jsonArray));
+            for (Object  idObject : idObjects) {
+                strings.add(idObject.toString());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return strings;
     }
 
 }

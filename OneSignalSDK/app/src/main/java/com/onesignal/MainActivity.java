@@ -236,135 +236,6 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       updateIamData();
    }
 
-   public void updateSessionAndFocusData() {
-      OneSignal.handlerForSessionAndFocusTracking(new OneSignal.Debug.Completion() {
-         @Override
-         public void onComplete(JSONObject data) {
-            // Session and Focus V2
-            sessionFocusTitleTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            sessionFocusProgressBar.setVisibility(View.INVISIBLE);
-            sessionFocusLinearLayout.setVisibility(View.VISIBLE);
-            try {
-               onSessionForegroundTimeTextView.setText(String.valueOf(data.getInt("sum_foreground_time")));
-               onFocusBackgroundTimeTextView.setText(String.valueOf(data.getInt("foreground_time")));
-            } catch (JSONException e) {
-               e.printStackTrace();
-            }
-         }
-      });
-   }
-
-   public void updateOutcomeData() {
-      OneSignal.handlerForOutcomeTracking(new OneSignal.Debug.Completion() {
-         @Override
-         public void onComplete(JSONObject data) {
-            // Outcome V2
-            outcomeV2TitleTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            outcomeV2ProgressBar.setVisibility(View.INVISIBLE);
-            outcomeV2LinearLayout.setVisibility(View.VISIBLE);
-
-            try {
-               JSONArray directNotifIds = new JSONArray();
-               if (data.has("direct_notif_ids"))
-                  directNotifIds = new JSONArray().put(data.getString("direct_notif_ids"));
-
-               JSONArray indirectNotifIds = new JSONArray();
-               if (data.has("indirect_notif_ids"))
-                  indirectNotifIds = data.getJSONArray("indirect_notif_ids");
-
-               JSONArray directIamIds = new JSONArray();
-               if (data.has("direct_iam_ids"))
-                  directIamIds = new JSONArray().put(data.getString("direct_iam_ids"));
-
-               JSONArray indirectIamIds = new JSONArray();
-               if (data.has("indirect_iam_ids"))
-                  indirectIamIds = data.getJSONArray("indirect_iam_ids");
-
-               addNewStringRecyclerViewWithTitle("Direct Notifs Ids", directNotifIds, outcomeV2LinearLayout);
-               addNewStringRecyclerViewWithTitle("Indirect Notifs Ids", indirectNotifIds, outcomeV2LinearLayout);
-               addNewStringRecyclerViewWithTitle("Direct Iam Ids", directIamIds, outcomeV2LinearLayout);
-               addNewStringRecyclerViewWithTitle("Indirect Iam Ids", indirectIamIds, outcomeV2LinearLayout);
-            } catch (JSONException e) {
-               e.printStackTrace();
-            }
-         }
-      });
-   }
-
-   private void addNewStringRecyclerViewWithTitle(String title, JSONArray ids, LinearLayout parent) {
-      boolean isNew = parent.findViewWithTag(title) == null;
-
-      View view = this.getLayoutInflater().inflate(R.layout.string_recycler_view_layout, null, false);
-      view.setTag(title);
-
-      if (!isNew)
-         view = parent.findViewWithTag(title);
-
-      TextView titleTextView = view.findViewById(R.id.string_recycler_view_title_text_view);
-      RecyclerView recyclerView = view.findViewById(R.id.string_recycler_view_recycler_view);
-
-      // Setup titleTextView layout
-      String titleText = title + ": " + ids.length();
-      titleTextView.setText(titleText);
-
-      if (recyclerView.getAdapter() == null) {
-         // Setup recyclerView layout only in event that this is new
-         DefaultItemAnimator defaultItemAnimator = new DefaultItemAnimator();
-
-         int orientation = true ? DividerItemDecoration.VERTICAL : DividerItemDecoration.HORIZONTAL;
-         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, orientation);
-
-         int divider = false ? R.drawable.divider : R.drawable.no_divider;
-         dividerItemDecoration.setDrawable(getResources().getDrawable(divider));
-
-         recyclerView.setItemAnimator(defaultItemAnimator);
-         recyclerView.addItemDecoration(dividerItemDecoration);
-         recyclerView.setHasFixedSize(false);
-
-         LinearLayoutManager layoutManager = new LinearLayoutManager(this, orientation, false);
-         recyclerView.setLayoutManager(layoutManager);
-
-         StringRecyclerViewAdapter adapter = new StringRecyclerViewAdapter(this, ids);
-         recyclerView.setAdapter(adapter);
-
-         if (isNew)
-            parent.addView(view);
-      } else {
-         if (recyclerView.getAdapter() != null) {
-            ((StringRecyclerViewAdapter) recyclerView.getAdapter()).setIds(ids);
-         }
-      }
-   }
-
-   public void updateIamData() {
-      OneSignal.handlerForIamTracking(new OneSignal.Debug.Completion() {
-         @Override
-         public void onComplete(JSONObject data) {
-            // IAM V2
-            iamV2TitleTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            iamV2ProgressBar.setVisibility(View.INVISIBLE);
-            iamV2LinearLayout.setVisibility(View.VISIBLE);
-         }
-      });
-   }
-
-   public void onAttachIamV2Data(View v) {
-      String iamv2RedisplayCount = iamV2RedisplayCountEditText.getText().toString().trim();
-      if (!TextUtils.isEmpty(iamv2RedisplayCount))
-         OneSignal.iamV2RedisplayCount = Integer.parseInt(iamv2RedisplayCount);
-
-      String iamv2RedisplayDelay = iamV2RedisplayDelayEditText.getText().toString().trim();
-      if (!TextUtils.isEmpty(iamv2RedisplayDelay))
-         OneSignal.iamV2RedisplayDelay = Integer.parseInt(iamv2RedisplayDelay);
-
-      OneSignal.iamV2Tag = iamV2TagEditText.getText().toString().trim();
-      OneSignal.iamV2Outcome = iamV2OutcomeEditText.getText().toString().trim();
-
-      OneSignal.pauseInAppMessages(false);
-
-      OneSignal.Debug.receiveInAppMessages();
-   }
-
    private void updateIamhost() {
       String appId = this.iamHost.getText().toString();
       OneSignalExampleApp.setOneSignalAppId(this, appId);
@@ -700,4 +571,197 @@ public class MainActivity extends Activity implements OSEmailSubscriptionObserve
       });
    }
 
+
+
+
+
+
+   /*
+    * ===========================================================================
+    * EVERYTHING BELOW THIS TEMPORARY AND INTENDED FOR TESTING PURPOSES ONLY
+    */
+
+   // Handles the visual representation of foreground time and accumulated foreground time
+   public void updateSessionAndFocusData() {
+      OneSignal.handlerForSessionAndFocusTracking(new OneSignal.Debug.Completion() {
+         @Override
+         public void onComplete(JSONObject data) {
+            // Session and Focus V2
+            sessionFocusTitleTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            sessionFocusProgressBar.setVisibility(View.INVISIBLE);
+            sessionFocusLinearLayout.setVisibility(View.VISIBLE);
+            try {
+               onSessionForegroundTimeTextView.setText(String.valueOf(data.getInt("sum_foreground_time")));
+               onFocusBackgroundTimeTextView.setText(String.valueOf(data.getInt("foreground_time")));
+            } catch (JSONException e) {
+               e.printStackTrace();
+            }
+         }
+      });
+   }
+
+   // Handles the visual representation for outcomes being tracked in the notification channel and iam channel
+   public static boolean directIamSent = false;
+   public void updateOutcomeData() {
+      OneSignal.handlerForOutcomeTracking(new OneSignal.Debug.Completion() {
+         @Override
+         public void onComplete(JSONObject data) {
+            // Outcome V2
+            outcomeV2TitleTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            outcomeV2ProgressBar.setVisibility(View.INVISIBLE);
+            outcomeV2LinearLayout.setVisibility(View.VISIBLE);
+
+            try {
+               JSONArray directNotifIds = new JSONArray();
+               if (data.has("direct_notif_ids"))
+                  directNotifIds = new JSONArray().put(data.getString("direct_notif_ids"));
+
+               JSONArray indirectNotifIds = new JSONArray();
+               if (data.has("indirect_notif_ids"))
+                  indirectNotifIds = data.getJSONArray("indirect_notif_ids");
+
+               addNewStringRecyclerViewWithTitle("Direct Notifs Ids", directNotifIds, outcomeV2LinearLayout);
+               addNewStringRecyclerViewWithTitle("Indirect Notifs Ids", indirectNotifIds, outcomeV2LinearLayout);
+
+               if (!directIamSent) {
+                  JSONArray directIamIds = new JSONArray();
+                  if (data.has("direct_iam_ids"))
+                     directIamIds = new JSONArray().put(data.getString("direct_iam_ids"));
+
+                  JSONArray indirectIamIds = new JSONArray();
+                  if (data.has("indirect_iam_ids"))
+                     indirectIamIds = data.getJSONArray("indirect_iam_ids");
+
+                  addNewStringRecyclerViewWithTitle("Direct Iam Ids", directIamIds, outcomeV2LinearLayout);
+                  addNewStringRecyclerViewWithTitle("Indirect Iam Ids", indirectIamIds, outcomeV2LinearLayout);
+               }
+
+            } catch (JSONException e) {
+               e.printStackTrace();
+            }
+         }
+      }, new OneSignal.Debug.Completion() {
+         @Override
+         public void onComplete(JSONObject data) {
+            try {
+               JSONArray directIamIds = new JSONArray();
+               if (data.has("direct")) {
+                  directIamSent = true;
+                  JSONObject directSource = data.getJSONObject("direct");
+                  if (directSource.has("in_app_message_ids"))
+                     directIamIds = directSource.getJSONArray("in_app_message_ids");
+
+               }
+
+               JSONArray indirectIamIds = new JSONArray();
+               if (!data.has("direct") && data.has("indirect")) {
+                  directIamSent = false;
+                  JSONObject indirectSource = data.getJSONObject("indirect");
+                  if (indirectSource.has("in_app_message_ids"))
+                     indirectIamIds = indirectSource.getJSONArray("in_app_message_ids");
+               }
+
+               addNewStringRecyclerViewWithTitle("Direct Iam Ids", directIamIds, outcomeV2LinearLayout);
+               addNewStringRecyclerViewWithTitle("Indirect Iam Ids", indirectIamIds, outcomeV2LinearLayout);
+
+            } catch (JSONException e) {
+               e.printStackTrace();
+            }
+         }
+      });
+   }
+
+   // Handles the hijacking of the IAM data and this method being called signifies that IAM data
+   // has now been successfully pulled down or from cache
+   // A new session (30+ secs in background) will pull latest IAMs down and reentering the app by
+   // force quitting and reopening it will use the cached IAMs form most recent new session
+   public void onAttachIamV2Data(View v) {
+      String iamv2RedisplayCount = iamV2RedisplayCountEditText.getText().toString().trim();
+      if (!TextUtils.isEmpty(iamv2RedisplayCount))
+         OneSignal.iamV2RedisplayCount = Integer.parseInt(iamv2RedisplayCount);
+
+      String iamv2RedisplayDelay = iamV2RedisplayDelayEditText.getText().toString().trim();
+      if (!TextUtils.isEmpty(iamv2RedisplayDelay))
+         OneSignal.iamV2RedisplayDelay = Integer.parseInt(iamv2RedisplayDelay);
+
+      OneSignal.iamV2Tag = iamV2TagEditText.getText().toString().trim();
+      OneSignal.iamV2Outcome = iamV2OutcomeEditText.getText().toString().trim();
+
+      OneSignal.pauseInAppMessages(false);
+
+      OneSignal.Debug.receiveInAppMessages();
+   }
+
+
+   private void addNewStringRecyclerViewWithTitle(String title, final JSONArray ids, LinearLayout parent) {
+      boolean isNew = parent.findViewWithTag(title) == null;
+
+      View view = this.getLayoutInflater().inflate(R.layout.string_recycler_view_layout, null, false);
+      if (!isNew)
+         view = parent.findViewWithTag(title);
+
+      view.setTag(title);
+
+      TextView titleTextView = view.findViewById(R.id.string_recycler_view_title_text_view);
+      final RecyclerView recyclerView = view.findViewById(R.id.string_recycler_view_recycler_view);
+
+      // Setup titleTextView layout
+      String titleText = title + ": " + ids.length();
+      titleTextView.setText(titleText);
+
+      if (isNew || recyclerView.getAdapter() == null) {
+         // Setup recyclerView layout only in event that this is new
+         buildRecyclerViewClasses(recyclerView, ids);
+         parent.addView(view);
+      } else {
+         if (recyclerView.getAdapter() != null) {
+            final View finalView = view;
+            runOnUiThread(new Runnable() {
+               @Override
+               public void run() {
+                  ((StringRecyclerViewAdapter) recyclerView.getAdapter()).setIds(ids);
+                  int vis = ids.length() == 0 ? View.GONE : View.VISIBLE;
+                  finalView.setVisibility(vis);
+               }
+            });
+         }
+      }
+   }
+
+   private void buildRecyclerViewClasses(RecyclerView recyclerView, JSONArray ids) {
+      DefaultItemAnimator defaultItemAnimator = new DefaultItemAnimator();
+
+      int orientation = true ? DividerItemDecoration.VERTICAL : DividerItemDecoration.HORIZONTAL;
+      DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, orientation);
+
+      int divider = false ? R.drawable.divider : R.drawable.no_divider;
+      dividerItemDecoration.setDrawable(getResources().getDrawable(divider));
+
+      recyclerView.setItemAnimator(defaultItemAnimator);
+      recyclerView.addItemDecoration(dividerItemDecoration);
+      recyclerView.setHasFixedSize(false);
+
+      LinearLayoutManager layoutManager = new LinearLayoutManager(this, orientation, false);
+      recyclerView.setLayoutManager(layoutManager);
+
+      StringRecyclerViewAdapter adapter = new StringRecyclerViewAdapter(this, ids);
+      recyclerView.setAdapter(adapter);
+   }
+
+   public void updateIamData() {
+      OneSignal.handlerForIamTracking(new OneSignal.Debug.Completion() {
+         @Override
+         public void onComplete(JSONObject data) {
+            // IAM V2
+            iamV2TitleTextView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            iamV2ProgressBar.setVisibility(View.INVISIBLE);
+            iamV2LinearLayout.setVisibility(View.VISIBLE);
+         }
+      });
+   }
+
+   /*
+    * DON'T PLACE ANYTHING UNDER HERE, THIS IS END OF TEMP DEBUG TESTING CODE
+    * ===========================================================================
+    */
 }
